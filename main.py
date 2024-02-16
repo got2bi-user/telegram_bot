@@ -2,21 +2,83 @@ import telebot
 import random
 import datetime
 from telebot import types
-file_log = open("./files/telegram.log", "a+", encoding="utf-8")
-token='your token for bot'
-bot=telebot.TeleBot(token)
+from telebot.types import LabeledPrice, ShippingOption
+provider_token = 'your provider token'
 list_id_stikers = ["CAACAgIAAxkBAAELZv9lzaJDYRGDA5HRMGmoXclKmhJNQgACYQADQzOdIRxX4gR4THmpNAQ","CAACAgIAAxkBAAELZwFlzaJMBebOVvM71DrqwIvVPMy4KwACYwADQzOdIVf4khZAH3xANAQ","CAACAgIAAxkBAAELZwNlzaJNL3xsfpQtpSLLQEGOJ0G8VgACZAADQzOdIWg9ZrEY53YxNAQ"]
+file_log = open("./files/telegram.log", "a+", encoding="utf-8")
+token = 'your bot token'
+provider_token = '381764678:TEST:78166'  # @BotFather -> Bot Settings -> Payments
+bot = telebot.TeleBot(token)
+
+# More about Payments: https://core.telegram.org/bots/payments
+
+prices = [LabeledPrice(label='Working Time Machine', amount=5750), LabeledPrice('Gift wrapping', 500)]
+
+shipping_options = [
+    ShippingOption(id='instant', title='WorldWide Teleporter').add_price(LabeledPrice('Teleporter', 1000)),
+    ShippingOption(id='pickup', title='Local pickup').add_price(LabeledPrice('Pickup', 300))]
+
+
 @bot.message_handler(commands=['start'])
-def start_message(message):
-    file_log.write("[ " + str(datetime.datetime.now()) + "] " +"Пользователь отправил команду /start\n")
+def command_start(message):
+    file_log.write("[ " + str(datetime.datetime.now()) + "] " + "Пользователь запустил бота \n")
     file_log.flush()
-    bot.send_message(message.chat.id,'Привет')
-@bot.message_handler(content_types = ['text'])
+    bot.send_message(message.chat.id,
+                     "Здравствуйте, я демо-торговый бот. Я могу продать вам Машину времени."
+                     " Используйте /buy, чтобы заказать один, /terms для условий, отправте выражение для его подсчета, отправте стикер и бот отправит случайную наклейку, или отправте файл и бот сохранит его")
+
+
+@bot.message_handler(commands=['terms'])
+def command_terms(message):
+    file_log.write("[ " + str(datetime.datetime.now()) + "] " + "Пользователь выбрал команду /terms \n")
+    file_log.flush()
+    bot.send_message(message.chat.id,
+                     'Благодарим вас за покупки с помощью нашего демо-бота. Мы надеемся, что вам понравится ваша новая машина времени!\n'
+'1. Если ваша машина времени не была доставлена вовремя, пожалуйста, переосмыслите свое представление о времени и попробуйте еще раз.\n2. Если вы обнаружите, что ваша машина времени не работает, пожалуйста, свяжитесь с нашими будущими сервисными мастерскими на Trappist-1e.Они будут доступны в любом месте в период с мая 2075 года по ноябрь 4000 года н.э.3. Если вы хотите получить возмещение, пожалуйста, подайте заявку на него вчера, и мы немедленно отправим вам его.')
+
+
+@bot.message_handler(commands=['buy'])
+def command_pay(message):
+    bot.send_message(message.chat.id,
+                     "Настоящие карты у меня работать не будут, деньги с вашего счета списаны не будут."
+                         "Используйте этот номер тестовой карты для оплаты вашей машины времени: `4242 4242 4242 4242 4242`"
+                         "\n\nэто ваш демонстрационный счет-фактура:", parse_mode='Markdown')
+    bot.send_invoice(
+                     message.chat.id,  #chat_id
+                     'Рабочая машина времени', #title
+                     ' Хотите навестить своих пра-пра-пра-прадедов? Разбогатеть на скачках? Пожать руку Хаммурапи и прогуляться по Висячим садам? Закажите нашу рабочую машину времени уже сегодня!', #description
+                     'HAPPY FRIDAYS COUPON', #invoice_payload
+                     provider_token, #provider_token
+                     'rub', #currency
+                     prices, #prices
+                     )
+
+
+@bot.shipping_query_handler(func=lambda query: True)
+def shipping(shipping_query):
+    print(shipping_query)
+    bot.answer_shipping_query(shipping_query.id, ok=True, shipping_options=shipping_options,
+                              error_message='О, похоже, наши курьеры прямо сейчас обедают. Попробуйте еще раз позже!')
+
+
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+    bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                  error_message="Aliens tried to steal your card's CVV, but we successfully protected your credentials,"
+                                                " try to pay again in a few minutes, we need a small rest.")
+
+
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message):
+    bot.send_message(message.chat.id,
+                     'Hoooooray! Спасибо за оплату! Мы обработаем ваш заказ для `{} {}` как можно быстрее! ' 'Оставайтесь на связи.Воспользуйтесь /buy еще раз, чтобы получить машину времени для своего друга!'.format(
+                         message.successful_payment.total_amount / 100, message.successful_payment.currency),
+                     parse_mode='Markdown')
+@bot.message_handler(content_types= ['text'])
 def calc_message(message):
     file_log.write("[ " + str(datetime.datetime.now()) + "] " + "Пользователь отправил текст " + message.text + " \n")
     file_log.flush()
     bot.send_message(message.chat.id, str(eval(message.text)))
-
 @bot.message_handler(content_types=['document'])
 def file_saves(message):
     file_log.write("[ " + str(datetime.datetime.now()) + "] " + "Пользователь отправил файл " + message.document.file_name + "\n")
@@ -32,7 +94,5 @@ def send_stikers(message):
     file_log.write("[ " + str(datetime.datetime.now()) + "] " + "Пользователь отправил стикер\n")
     file_log.flush()
     bot.send_sticker(message.chat.id, list_id_stikers[random.randint(0,2)])
-bot.infinity_polling()
 
-
-
+bot.infinity_polling(skip_pending = True)
