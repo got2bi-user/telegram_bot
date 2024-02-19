@@ -6,8 +6,7 @@ from telebot.types import LabeledPrice, ShippingOption
 provider_token = 'your provider token'
 list_id_stikers = ["CAACAgIAAxkBAAELZv9lzaJDYRGDA5HRMGmoXclKmhJNQgACYQADQzOdIRxX4gR4THmpNAQ","CAACAgIAAxkBAAELZwFlzaJMBebOVvM71DrqwIvVPMy4KwACYwADQzOdIVf4khZAH3xANAQ","CAACAgIAAxkBAAELZwNlzaJNL3xsfpQtpSLLQEGOJ0G8VgACZAADQzOdIWg9ZrEY53YxNAQ"]
 file_log = open("./files/telegram.log", "a+", encoding="utf-8")
-token = 'your bot token'
-provider_token = '381764678:TEST:78166'  # @BotFather -> Bot Settings -> Payments
+token = 'your bot token'  # @BotFather -> Bot Settings -> Payments
 bot = telebot.TeleBot(token)
 
 prices = [LabeledPrice(label='Working Time Machine', amount=5750), LabeledPrice('Gift wrapping', 500)]
