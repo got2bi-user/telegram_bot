@@ -101,6 +101,7 @@ def got_payment(message):
                      'Hoooooray! Спасибо за оплату! Мы обработаем ваш заказ для `{} {}` как можно быстрее! ' 'Оставайтесь на связи.Воспользуйтесь /buy еще раз, чтобы получить машину времени для своего друга!'.format(
                          message.successful_payment.total_amount / 100, message.successful_payment.currency),
                      parse_mode='Markdown')
+    basket.clear()
 @bot.message_handler(content_types= ['text'])
 def calc_message(message):
     file_log.write("[ " + str(datetime.datetime.now()) + "] " + "Пользователь отправил текст " + message.text + " \n")
