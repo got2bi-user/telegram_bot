@@ -10,9 +10,9 @@ token = 'your bot token'
 provider_token = '381764678:TEST:78166'  # @BotFather -> Bot Settings -> Payments
 bot = telebot.TeleBot(token)
 
-# More about Payments: https://core.telegram.org/bots/payments
-
 prices = [LabeledPrice(label='Working Time Machine', amount=5750), LabeledPrice('Gift wrapping', 500)]
+
+basket = []
 
 shipping_options = [
     ShippingOption(id='instant', title='WorldWide Teleporter').add_price(LabeledPrice('Teleporter', 1000)),
@@ -28,6 +28,34 @@ def command_start(message):
                      " Используйте /buy, чтобы заказать один, /terms для условий, отправте выражение для его подсчета, отправте стикер и бот отправит случайную наклейку, или отправте файл и бот сохранит его")
 
 
+
+@bot.message_handler(commands=['basket'])
+def print_basket(message):
+    file_log.write("[ " + str(datetime.datetime.now()) + "] " + "Пользователь выбрал команду /products \n")
+    file_log.flush()
+    for line in range(len(basket)):
+        bot.send_message(message.chat.id,str(line + 1) + " )" + basket[line].label + " -> " + str(basket[line].amount / 100))
+@bot.message_handler(commands=['product'])
+def print_and_add_products(message):
+    file_log.write("[ " + str(datetime.datetime.now()) + "] " + "Пользователь выбрал команду /products \n")
+    file_log.flush()
+    for line in range(len(prices)):
+        markup = types.InlineKeyboardMarkup()
+        button_add = types.InlineKeyboardButton(text='+', callback_data=str(line) + "_add")
+        button_sub = types.InlineKeyboardButton(text="-", callback_data=str(line) + "_sub")
+        markup.add(button_add, button_sub)
+        bot.send_message(message.chat.id,str(line + 1) + " )" + prices[line].label + " -> " + str(prices[line].amount/100),reply_markup = markup)
+@bot.callback_query_handler(func=lambda call:True)
+def callback(call):
+    x = call.data.split("_")
+    if x[1] == "add":
+        basket.append(prices[int(x[0])])
+    elif x[1] == "sub":
+        for line_basket in range(len(basket)):
+            if basket[line_basket].label == prices[int(x[0])].label:
+                basket.pop(line_basket)
+                break
+
 @bot.message_handler(commands=['terms'])
 def command_terms(message):
     file_log.write("[ " + str(datetime.datetime.now()) + "] " + "Пользователь выбрал команду /terms \n")
@@ -35,8 +63,6 @@ def command_terms(message):
     bot.send_message(message.chat.id,
                      'Благодарим вас за покупки с помощью нашего демо-бота. Мы надеемся, что вам понравится ваша новая машина времени!\n'
 '1. Если ваша машина времени не была доставлена вовремя, пожалуйста, переосмыслите свое представление о времени и попробуйте еще раз.\n2. Если вы обнаружите, что ваша машина времени не работает, пожалуйста, свяжитесь с нашими будущими сервисными мастерскими на Trappist-1e.Они будут доступны в любом месте в период с мая 2075 года по ноябрь 4000 года н.э.3. Если вы хотите получить возмещение, пожалуйста, подайте заявку на него вчера, и мы немедленно отправим вам его.')
-
-
 @bot.message_handler(commands=['buy'])
 def command_pay(message):
     bot.send_message(message.chat.id,
@@ -45,12 +71,13 @@ def command_pay(message):
                          "\n\nэто ваш демонстрационный счет-фактура:", parse_mode='Markdown')
     bot.send_invoice(
                      message.chat.id,  #chat_id
-                     'Рабочая машина времени', #title
-                     ' Хотите навестить своих пра-пра-пра-прадедов? Разбогатеть на скачках? Пожать руку Хаммурапи и прогуляться по Висячим садам? Закажите нашу рабочую машину времени уже сегодня!', #description
+                     'Покупка', #title
+                     "Операция покупки", #description
                      'HAPPY FRIDAYS COUPON', #invoice_payload
                      provider_token, #provider_token
                      'rub', #currency
-                     prices, #prices
+                     basket, #prices
+                     is_flexible=True
                      )
 
 
